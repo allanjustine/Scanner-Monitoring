@@ -28,7 +28,7 @@ export const BranchList = ({ branchLists }: { branchLists: BranchListTypes[] }) 
     } = useForm({
         resolver: zodResolver(schema),
     });
-
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [isEditing, setIsEditing] = useState<{ id: number; isOpen: boolean }>({
         id: 0,
         isOpen: false,
@@ -78,7 +78,11 @@ export const BranchList = ({ branchLists }: { branchLists: BranchListTypes[] }) 
     };
 
     const handleDeleteBranchList = (id: number) => () => {
-        router.delete(route('branch-lists.destroy', id));
+        setIsDeleting(true);
+        router.delete(route('branch-lists.destroy', id), {
+            preserveState: true,
+            onFinish: () => setIsDeleting(false),
+        });
     };
 
     const onSubmit = async (data: z.infer<typeof schema>) => {
@@ -160,10 +164,11 @@ export const BranchList = ({ branchLists }: { branchLists: BranchListTypes[] }) 
                                     <Button
                                         type="button"
                                         variant="ghost"
+                                        disabled={isDeleting}
                                         className="p-1 text-xs text-red-500 hover:text-red-600"
                                         onClick={handleDeleteBranchList(branchList.id)}
                                     >
-                                        <Trash />
+                                        {isDeleting ? <Loader2 className="animate-spin" /> : <Trash />}
                                     </Button>
                                 </div>
                             </div>
