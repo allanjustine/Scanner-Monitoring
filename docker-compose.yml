@@ -9,6 +9,14 @@ services:
     networks:
       - scanner_monitoring
 
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=172.17.0.1
+      - DB_PORT=3306
+      - DB_DATABASE=scanner_monitoring
+      - DB_USERNAME=smct
+      - DB_PASSWORD=smct
+
   nginx:
     image: nginx:alpine
     container_name: scanner_monitoring_nginx
