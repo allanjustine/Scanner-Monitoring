@@ -12,29 +12,20 @@ RUN apt-get update && apt-get install -y \
     curl \
     npm
 
-RUN apt-get update && apt-get install -y \
-git unzip curl nodejs npm
-
-# Install Node.js 20 (replace apt's outdated version)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
-
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
-
-WORKDIR /var/www
-
-COPY ./package*.json ./
-
-# Install the dependencies
-RUN npm install
-
-COPY . .
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Build the application
-RUN npm run build
+# Set working directory
+WORKDIR /var/www
+
+# Copy app files
+COPY . .
+
+# NPM INSTALL & BUILD
+RUN npm install && npm run build
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
