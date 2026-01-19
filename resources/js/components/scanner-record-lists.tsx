@@ -45,7 +45,7 @@ export default function ScannerRecordLists({
             status: scannerRecordList?.status ?? '',
             remarks: scannerRecordList?.remarks ?? '',
         }));
-    }, [scannerRecordList, setData]);
+    }, [scannerRecordList, setData, editingId]);
 
     const isEditing = editingId === scannerRecordList?.id;
 
@@ -92,6 +92,8 @@ export default function ScannerRecordLists({
         setEditingId((prev) => (prev === id ? null : id));
     };
 
+    const branchItems = [scannerRecordList.branch_list, ...selectableBranchLists];
+
     return (
         <TableRow>
             <TableCell className="font-medium">{scannerRecordList?.id}</TableCell>
@@ -129,8 +131,8 @@ export default function ScannerRecordLists({
                         <SelectContent>
                             <SelectGroup>
                                 <SelectLabel>Branches</SelectLabel>
-                                {selectableBranchLists.length > 0 ? (
-                                    selectableBranchLists.map((item, index) => (
+                                {branchItems.length > 0 ? (
+                                    branchItems.map((item, index) => (
                                         <SelectItem key={index} value={String(item.id)}>
                                             {`(${item.branch_code}) - ${item.branch_name}`}
                                         </SelectItem>
