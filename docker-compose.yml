@@ -1,44 +1,27 @@
 services:
-  scanner-monitoring:
+  app:
     build:
-      context: ./
+      context: .
       dockerfile: Dockerfile
-    image: scanner-monitoring
-    container_name: scanner-monitoring
-    restart: unless-stopped
-    working_dir: /var/www/
+    container_name: scanner_monitoring
     volumes:
-      - ./:/var/www
-      - ./docker-compose/nginx/default.conf:/etc/nginx/conf.d/default.conf
-
-
-
+      - .:/var/www
     networks:
-      - scanner-monitoring
-    environment:
-      DB_CONNECTION: mysql
-      DB_HOST: 172.17.0.1
-      DB_PORT: 3306
-      DB_DATABASE: scanner_monitoring
-      DB_USERNAME: smct
-      DB_PASSWORD: smct
+      - scanner_monitoring
 
-
-  scanner-monitoring-nginx:
+  nginx:
     image: nginx:alpine
-    container_name: scanner-monitoring-nginx
-    restart: unless-stopped
+    container_name: scanner_monitoring_nginx
     ports:
-      - 1009:1009
+      - "1009:1009"
     volumes:
-      - ./docker-compose/nginx/default.conf:/etc/nginx/default.conf
-
-      - ./:/var/www
-
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
     networks:
-      - scanner-monitoring
-
+      - scanner_monitoring
 
 networks:
-  scanner-monitoring:
+  scanner_monitoring:
     driver: bridge
