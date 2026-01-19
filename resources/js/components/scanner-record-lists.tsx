@@ -2,8 +2,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { BranchList } from '@/types/branch-lists';
 import { ScannerRecordList } from '@/types/scanner-record-lists';
 import { useForm } from '@inertiajs/react';
-import { Loader2, Trash2 } from 'lucide-react';
-import { ChangeEvent, useEffect, useRef } from 'react';
+import { Loader2, Pen, Save, Trash2, X } from 'lucide-react';
+import { Activity, ChangeEvent, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { TableCell, TableRow } from './ui/table';
@@ -11,16 +11,20 @@ import { TableCell, TableRow } from './ui/table';
 export default function ScannerRecordLists({
     scannerRecordList,
     selectableBranchLists,
+    editingId,
+    setEditingId,
 }: {
     scannerRecordList: ScannerRecordList;
     selectableBranchLists: BranchList[];
+    editingId: number | null;
+    setEditingId: React.Dispatch<React.SetStateAction<number | null>>;
 }) {
     const {
-        delete: destroy,
         patch,
         data,
         setData,
-        processing,
+        processing: updating,
+        reset,
     } = useForm({
         office_type: '',
         branch_list_id: '',
@@ -29,7 +33,7 @@ export default function ScannerRecordLists({
         status: '',
         remarks: '',
     });
-    const debounceRef = useRef<NodeJS.Timeout>(null);
+    const { delete: destroy, processing: deleting } = useForm({});
 
     useEffect(() => {
         setData((data) => ({
@@ -43,7 +47,9 @@ export default function ScannerRecordLists({
         }));
     }, [scannerRecordList, setData]);
 
-    const status = (status: 'Active' | 'Deffective' | 'For Repair') => {
+    const isEditing = editingId === scannerRecordList?.id;
+
+    const statusClass = (status: 'Active' | 'Deffective' | 'For Repair') => {
         switch (status) {
             case 'For Repair':
                 return 'bg-yellow-200 text-yellow-800';
@@ -61,8 +67,6 @@ export default function ScannerRecordLists({
             ...data,
             [field]: value,
         }));
-
-        patch(route('scanner-record-lists.update', scannerRecordList.id));
     };
 
     const handleInputChange = (field: keyof typeof data) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -72,21 +76,28 @@ export default function ScannerRecordLists({
             ...item,
             [field]: value,
         }));
+    };
 
-        if (debounceRef.current) clearTimeout(debounceRef.current);
+    const handleUpdate = (id: number) => () => {
+        patch(route('scanner-record-lists.update', id), {
+            onSuccess: () => {
+                reset();
+                setEditingId(null);
+                setEditingId(null);
+            },
+        });
+    };
 
-        debounceRef.current = setTimeout(() => {
-            if (!value.trim()) return;
-
-            patch(route('scanner-record-lists.update', scannerRecordList.id));
-        }, 1000);
+    const handleEdit = (id: number) => () => {
+        setEditingId((prev) => (prev === id ? null : id));
     };
 
     return (
         <TableRow>
             <TableCell className="font-medium">{scannerRecordList?.id}</TableCell>
+
             <TableCell>
-                {scannerRecordList?.office_type ?? (
+                {isEditing ? (
                     <Select value={data.office_type} onValueChange={handleSubmitChange('office_type')}>
                         <SelectTrigger className="w-50">
                             <SelectValue placeholder="Select office type" />
@@ -102,11 +113,15 @@ export default function ScannerRecordLists({
                             </SelectGroup>
                         </SelectContent>
                     </Select>
+                ) : (
+                    scannerRecordList?.office_type
                 )}
             </TableCell>
+
             <TableCell>{scannerRecordList?.branch_list?.branch_code}</TableCell>
+
             <TableCell>
-                {scannerRecordList?.branch_list?.branch_name ?? (
+                {isEditing ? (
                     <Select value={data.branch_list_id} onValueChange={handleSubmitChange('branch_list_id')}>
                         <SelectTrigger className="w-50">
                             <SelectValue placeholder="Select branch" />
@@ -114,30 +129,43 @@ export default function ScannerRecordLists({
                         <SelectContent>
                             <SelectGroup>
                                 <SelectLabel>Branches</SelectLabel>
-                                {selectableBranchLists?.map((item, index) => (
-                                    <SelectItem key={index} value={String(item.id)}>
-                                        {`(${item.branch_code}) - ${item.branch_name}`}
+                                {selectableBranchLists.length > 0 ? (
+                                    selectableBranchLists.map((item, index) => (
+                                        <SelectItem key={index} value={String(item.id)}>
+                                            {`(${item.branch_code}) - ${item.branch_name}`}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <SelectItem value="No branch available" disabled>
+                                        No branches available
                                     </SelectItem>
-                                ))}
+                                )}
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                )}
-            </TableCell>
-            <TableCell>
-                {scannerRecordList?.serial_number ?? (
-                    <Input value={data.serial_number} placeholder="Enter scanner serial number" onChange={handleInputChange('serial_number')} />
-                )}
-            </TableCell>
-            <TableCell>
-                {scannerRecordList?.model ?? <Input value={data.model} placeholder="Enter scanner model" onChange={handleInputChange('model')} />}
-            </TableCell>
-            <TableCell>
-                {scannerRecordList?.status ? (
-                    <span className={`rounded-4xl px-1 py-0.5 text-[9px] font-bold uppercase ${status(scannerRecordList?.status)}`}>
-                        {scannerRecordList?.status}
-                    </span>
                 ) : (
+                    scannerRecordList?.branch_list?.branch_name
+                )}
+            </TableCell>
+
+            <TableCell>
+                {isEditing ? (
+                    <Input value={data.serial_number} placeholder="Enter scanner serial number" onChange={handleInputChange('serial_number')} />
+                ) : (
+                    scannerRecordList?.serial_number
+                )}
+            </TableCell>
+
+            <TableCell>
+                {isEditing ? (
+                    <Input value={data.model} placeholder="Enter scanner model" onChange={handleInputChange('model')} />
+                ) : (
+                    scannerRecordList?.model
+                )}
+            </TableCell>
+
+            <TableCell>
+                {isEditing ? (
                     <Select value={data.status} onValueChange={handleSubmitChange('status')}>
                         <SelectTrigger className="w-50">
                             <SelectValue placeholder="Select status" />
@@ -153,21 +181,56 @@ export default function ScannerRecordLists({
                             </SelectGroup>
                         </SelectContent>
                     </Select>
+                ) : (
+                    scannerRecordList?.status && (
+                        <span className={`rounded-4xl px-1 py-0.5 text-[9px] font-bold uppercase ${statusClass(scannerRecordList?.status)}`}>
+                            {scannerRecordList?.status}
+                        </span>
+                    )
                 )}
             </TableCell>
+
             <TableCell>
-                {scannerRecordList?.remarks ?? <Input value={data.remarks} placeholder="Enter remarks" onChange={handleInputChange('remarks')} />}
+                {isEditing ? (
+                    <Input value={data.remarks} placeholder="Enter remarks" onChange={handleInputChange('remarks')} />
+                ) : (
+                    scannerRecordList?.remarks
+                )}
             </TableCell>
+
             <TableCell>
                 <div className="flex items-center gap-2">
+                    <Activity mode={isEditing ? 'visible' : 'hidden'}>
+                        <Button
+                            disabled={updating}
+                            variant={'outline'}
+                            className="text-green-500 hover:text-green-600"
+                            type="button"
+                            onClick={handleUpdate(scannerRecordList?.id ?? 0)}
+                        >
+                            {updating ? <Loader2 className="animate-spin" /> : <Save />}
+                        </Button>
+                    </Activity>
+
+                    <Activity mode={!updating ? 'visible' : 'hidden'}>
+                        <Button
+                            variant={'outline'}
+                            className={`${isEditing ? 'text-red-500 hover:text-red-600' : 'text-blue-500 hover:text-blue-600'}`}
+                            type="button"
+                            onClick={handleEdit(scannerRecordList?.id ?? 0)}
+                        >
+                            {isEditing ? <X /> : <Pen />}
+                        </Button>
+                    </Activity>
+
                     <Button
                         type="button"
                         variant={'outline'}
-                        disabled={processing}
+                        disabled={deleting}
                         onClick={() => destroy(route('scanner-record-lists.destroy', scannerRecordList?.id))}
                         className="flex items-center gap-1 rounded px-2 py-1 text-sm text-red-500 hover:text-red-600"
                     >
-                        {processing ? <Loader2 className="animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        {deleting ? <Loader2 className="animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                 </div>
             </TableCell>

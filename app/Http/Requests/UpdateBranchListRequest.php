@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateBranchListRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class UpdateBranchListRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +23,8 @@ class UpdateBranchListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'branch_name' => ['required', 'min:1', 'max:255', 'string', Rule::unique('branch_lists', 'branch_name')->ignore($this->branch_list)],
+            'branch_code' => ['required', 'min:1', 'max:255', 'string', Rule::unique('branch_lists', 'branch_code')->ignore($this->branch_list)],
         ];
     }
 }

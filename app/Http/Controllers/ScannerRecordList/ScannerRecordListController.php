@@ -16,7 +16,31 @@ class ScannerRecordListController extends Controller
      */
     public function index()
     {
-        $scannerRecordLists = ScannerRecordList::with('branchList')->get();
+        $per_page = request('per_page', 5);
+
+        $search = request('search', '');
+
+        $scannerRecordLists = ScannerRecordList::with('branchList')
+            ->when(
+                $search,
+                fn($item)
+                =>
+                $item->where(
+                    fn($query)
+                    =>
+                    $query->whereAny([
+                        'office_type',
+                        'serial_number',
+                        'model',
+                        'status',
+                        'remarks'
+                    ], 'like', "%{$search}%")
+                        ->orWhereRelation('branchList', 'branch_name', 'like', "%{$search}%")
+                        ->orWhereRelation('branchList', 'branch_code', 'like', "%{$search}%")
+                )
+            )
+            ->cursorPaginate($per_page)
+            ->withQueryString();
 
         $branchLists = BranchList::all();
 
@@ -44,9 +68,7 @@ class ScannerRecordListController extends Controller
      */
     public function store(Request $request)
     {
-        ScannerRecordList::create([
-            $request->field => $request->value
-        ]);
+        ScannerRecordList::create($request->all());
 
         return to_route('scanner-record-lists.index')->with('success', 'Scanner record created successfully.');
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BranchList;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBranchListRequest;
+use App\Http\Requests\UpdateBranchListRequest;
 use App\Models\BranchList;
 use Illuminate\Http\Request;
 
@@ -56,16 +57,22 @@ class BranchListController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateBranchListRequest $request, BranchList $branchList)
     {
-        //
+        $data = $request->validated();
+
+        $branchList->update($data);
+
+        return to_route('scanner-record-lists.index')->with('success', "Branch {$branchList->branch_name} ($branchList->branch_code) updated successfully.");
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(BranchList $branchList)
     {
-        //
+        $branchList->delete();
+
+        return to_route('scanner-record-lists.index')->with('success', "Branch {$branchList->branch_name} ($branchList->branch_code) deleted successfully.");
     }
 }

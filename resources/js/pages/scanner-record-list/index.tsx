@@ -1,48 +1,39 @@
-import InputError from '@/components/input-error';
+import { BranchList } from '@/components/branch-lists';
 import ScannerRecordLists from '@/components/scanner-record-lists';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Toaster } from '@/components/ui/sonner';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SharedData } from '@/types';
-import { BranchList } from '@/types/branch-lists';
+import { BranchList as BranchListTypes } from '@/types/branch-lists';
 import { ScannerRecordList } from '@/types/scanner-record-lists';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Head, useForm as useFormInertia, usePage } from '@inertiajs/react';
-import { Loader2 } from 'lucide-react';
-import { ChangeEvent, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Loader2, Plus, Save, Search } from 'lucide-react';
+import { Activity, ChangeEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import z from 'zod';
-
-const schema = z.object({
-    branch_name: z.string().nonempty('Branch name is required'),
-    branch_code: z
-        .string()
-        .nonempty('Branch code is required')
-        .transform((value) => value.toUpperCase()),
-});
 
 export default function Index({
     scannerRecordLists,
     branchLists,
     selectableBranchLists,
 }: {
-    scannerRecordLists: ScannerRecordList[];
-    branchLists: BranchList[];
-    selectableBranchLists: BranchList[];
+    scannerRecordLists: Record<string, ScannerRecordList[]>;
+    branchLists: BranchListTypes[];
+    selectableBranchLists: BranchListTypes[];
 }) {
     const { flash } = usePage<SharedData>().props;
-    const debounceRef = useRef<NodeJS.Timeout>(null);
     const {
         data,
         setData,
         post,
+        reset: reset,
+        isDirty,
         processing,
-        reset: resetItem,
-    } = useFormInertia({
+    } = useForm({
         office_type: '',
         branch_list_id: '',
         serial_number: '',
@@ -50,117 +41,93 @@ export default function Index({
         status: '',
         remarks: '',
     });
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const debounceRef = useRef<NodeJS.Timeout>(null);
+    const [filters, setFilters] = useState({
+        search: '',
+        per_page: '5',
+        cursor: '',
+    });
+
+    useEffect(() => {
+        router.get(route('scanner-record-lists.index'), filters, {
+            preserveState: true,
+            replace: true,
+        });
+    }, [filters]);
 
     useEffect(() => {
         if (flash.success) {
-            toast.success('Success', {
-                description: flash.success,
-                duration: 5000,
-                position: 'bottom-center',
-            });
+            toast.success('Success', { description: flash.success, duration: 5000, position: 'bottom-center' });
         }
         if (flash.error) {
-            toast.error('Error', {
-                description: flash.error,
-                duration: 5000,
-                position: 'bottom-center',
-            });
+            toast.error('Error', { description: flash.error, duration: 5000, position: 'bottom-center' });
         }
     }, [flash]);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-        reset,
-    } = useForm({
-        resolver: zodResolver(schema),
-    });
-
-    const onSubmit = (data: z.infer<typeof schema>) => {
-        post(route('branch-lists.store', data), {
-            onSuccess: () => reset(),
-        });
-    };
+    async function submitData() {
+        post(route('scanner-record-lists.store'), { onSuccess: () => reset() });
+    }
 
     const handleSelectChange = (field: keyof typeof data) => (value: string) => {
-        setData((item) => ({
-            ...item,
-            [field]: value,
-        }));
-
-        post(route('scanner-record-lists.store', { field, value }), {
-            onSuccess: () => resetItem(),
-        });
+        setData((item) => ({ ...item, [field]: value }));
     };
 
     const handleInputChange = (field: keyof typeof data) => (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
+        setData((item) => ({ ...item, [field]: value }));
+    };
 
-        setData((item) => ({
+    const handlePerPage = (e: ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+
+        setFilters((item) => ({
             ...item,
-            [field]: value,
+            per_page: value,
         }));
+    };
+
+    const handleSearchTerm = (e: ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
 
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         debounceRef.current = setTimeout(() => {
-            if (!value.trim()) return;
+            setFilters((item) => ({
+                ...item,
+                search: value,
+                cursor: '',
+            }));
+        }, 1000);
+    };
 
-            post(route('scanner-record-lists.store', { field, value }), {
-                onSuccess: () => resetItem(),
-            });
-        }, 1500);
+    const handlePageChange = (cursor: string) => () => {
+        setFilters((item) => ({
+            ...item,
+            cursor,
+        }));
     };
 
     return (
         <>
             <Head title="Home" />
             <div className="grid grid-cols-[20%_80%]">
-                <div className="flex flex-col space-y-5 p-10">
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="space-y-5">
-                            <div className="flex flex-col space-y-2">
-                                <Label htmlFor="branch_name" className="text-gray-200">
-                                    Branch name
-                                </Label>
-                                <Input {...register('branch_name')} placeholder="Enter branch name" />
-                                <InputError message={errors?.branch_name?.message} />
-                            </div>
-                            <div className="flex flex-col space-y-2">
-                                <Label htmlFor="branch_code" className="text-gray-200">
-                                    Branch code
-                                </Label>
-                                <Input {...register('branch_code')} placeholder="Enter branch code" />
-                                <InputError message={errors?.branch_code?.message} />
-                            </div>
-                            <Button type="submit" disabled={processing} className="w-full bg-blue-500 text-white hover:bg-blue-600">
-                                {processing ? <Loader2 className="animate-spin" /> : 'Submit'}
-                            </Button>
-                        </div>
-                    </form>
-
-                    <div>
-                        <h1 className="text-md font-bold uppercase">Branch lists</h1>
-                        <div className="h-150 overflow-y-auto">
-                            {branchLists.length > 0 ? (
-                                branchLists.map((branchList, index) => (
-                                    <div key={index} className="my-2 rounded-md bg-gray-600 p-2 hover:bg-gray-700">
-                                        <p className="text-gray-200">{`(${branchList.branch_code}) - ${branchList.branch_name}`}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p>No branch list added yet</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
+                <BranchList branchLists={branchLists} />
                 <div className="p-10">
                     <div className="flex justify-between">
                         <h1 className="text-lg">Scanner records</h1>
+                        <div>
+                            <InputGroup>
+                                <InputGroupInput placeholder="Search..." onChange={handleSearchTerm} />
+                                <InputGroupAddon>
+                                    <Search />
+                                </InputGroupAddon>
+                                <Activity mode={filters.search ? 'visible' : 'hidden'}>
+                                    <InputGroupAddon align="inline-end">{scannerRecordLists.data.length} results</InputGroupAddon>
+                                </Activity>
+                            </InputGroup>
+                        </div>
                     </div>
-
                     <Table>
                         <TableCaption>A list of your recent scanner records.</TableCaption>
                         <TableHeader>
@@ -176,27 +143,11 @@ export default function Index({
                                 <TableHead>Action</TableHead>
                             </TableRow>
                         </TableHeader>
-
                         <TableBody>
-                            {scannerRecordLists.length > 0 ? (
-                                scannerRecordLists.map((scannerRecordList, index) => (
-                                    <ScannerRecordLists
-                                        key={index}
-                                        scannerRecordList={scannerRecordList}
-                                        selectableBranchLists={selectableBranchLists}
-                                    />
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell className="py-5 text-center" colSpan={9}>
-                                        No task added yet
-                                    </TableCell>
-                                </TableRow>
-                            )}
-
                             <TableRow>
-                                <TableCell></TableCell>
-
+                                <TableCell>
+                                    <Plus className="text-blue-500" />
+                                </TableCell>
                                 <TableCell>
                                     <Select value={data.office_type} onValueChange={handleSelectChange('office_type')}>
                                         <SelectTrigger className="w-50">
@@ -214,9 +165,7 @@ export default function Index({
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
-
                                 <TableCell></TableCell>
-
                                 <TableCell>
                                     <Select value={data.branch_list_id} onValueChange={handleSelectChange('branch_list_id')}>
                                         <SelectTrigger className="w-50">
@@ -226,8 +175,8 @@ export default function Index({
                                             <SelectGroup>
                                                 <SelectLabel>Branches</SelectLabel>
                                                 {selectableBranchLists.length > 0 ? (
-                                                    selectableBranchLists.map((item, index) => (
-                                                        <SelectItem key={index} value={String(item.id)}>
+                                                    selectableBranchLists.map((item) => (
+                                                        <SelectItem key={item.id} value={String(item.id)}>
                                                             {`(${item.branch_code}) - ${item.branch_name}`}
                                                         </SelectItem>
                                                     ))
@@ -240,7 +189,6 @@ export default function Index({
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
-
                                 <TableCell>
                                     <Input
                                         value={data.serial_number}
@@ -248,11 +196,9 @@ export default function Index({
                                         onChange={handleInputChange('serial_number')}
                                     />
                                 </TableCell>
-
                                 <TableCell>
                                     <Input value={data.model} placeholder="Enter scanner model" onChange={handleInputChange('model')} />
                                 </TableCell>
-
                                 <TableCell>
                                     <Select value={data.status} onValueChange={handleSelectChange('status')}>
                                         <SelectTrigger className="w-50">
@@ -270,14 +216,67 @@ export default function Index({
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
-
                                 <TableCell>
                                     <Input value={data.remarks} placeholder="Enter remarks" onChange={handleInputChange('remarks')} />
                                 </TableCell>
+                                <Activity mode={isDirty ? 'visible' : 'hidden'}>
+                                    <TableCell>
+                                        <Button disabled={processing} type="button" className="text-blue-500" onClick={submitData} variant="outline">
+                                            {processing ? <Loader2 size={20} className="h-4 w-4 animate-spin" /> : <Save size={20} />}
+                                        </Button>
+                                    </TableCell>
+                                </Activity>
                             </TableRow>
+                            {scannerRecordLists.data.length > 0 ? (
+                                scannerRecordLists.data.map((scannerRecordList, index) => (
+                                    <ScannerRecordLists
+                                        key={index}
+                                        scannerRecordList={scannerRecordList}
+                                        selectableBranchLists={selectableBranchLists}
+                                        editingId={editingId}
+                                        setEditingId={setEditingId}
+                                    />
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell className="py-5 text-center" colSpan={9}>
+                                        No task added yet
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
-
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <Button
+                                    variant={'ghost'}
+                                    type="button"
+                                    onClick={handlePageChange(String(scannerRecordLists?.prev_cursor))}
+                                    className={`${!scannerRecordLists?.prev_cursor ? 'pointer-events-none opacity-50' : ''} hover:bg-transparent`}
+                                >
+                                    <PaginationPrevious />
+                                </Button>
+                            </PaginationItem>
+                            <NativeSelect value={String(scannerRecordLists.per_page)} onChange={handlePerPage}>
+                                {[5, 10, 20, 50, 100, 200, 500].map((item, index) => (
+                                    <NativeSelectOption value={String(item)} key={index}>
+                                        {item}
+                                    </NativeSelectOption>
+                                ))}
+                            </NativeSelect>
+                            <PaginationItem>
+                                <Button
+                                    variant={'ghost'}
+                                    type="button"
+                                    onClick={handlePageChange(String(scannerRecordLists?.next_cursor))}
+                                    className={`${!scannerRecordLists?.next_cursor ? 'pointer-events-none opacity-50' : ''} hover:bg-transparent`}
+                                >
+                                    <PaginationNext />
+                                </Button>
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
                     <Toaster />
                 </div>
             </div>
