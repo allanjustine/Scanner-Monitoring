@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: scanner_monitoring
+    restart: unless-stopped
     volumes:
       - .:/var/www
     networks:
@@ -20,6 +21,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: scanner_monitoring_nginx
+    restart: unless-stopped
     ports:
       - "1009:1009"
     volumes:
