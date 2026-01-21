@@ -43,6 +43,7 @@ export default function Index({
     });
     const [editingId, setEditingId] = useState<number | null>(null);
     const debounceRef = useRef<NodeJS.Timeout>(null);
+    const [isFiltered, setIsFiltered] = useState<boolean>(false);
     const [filters, setFilters] = useState({
         search: '',
         per_page: '5',
@@ -50,11 +51,14 @@ export default function Index({
     });
 
     useEffect(() => {
-        router.get(route('scanner-record-lists.index'), filters, {
-            preserveState: true,
-            replace: true,
-        });
-    }, [filters]);
+        if (isFiltered) {
+            router.get(route('scanner-record-lists.index'), filters, {
+                preserveState: true,
+                replace: true,
+            });
+            setIsFiltered(false);
+        }
+    }, [filters, isFiltered]);
 
     useEffect(() => {
         if (flash.success) {
@@ -85,6 +89,7 @@ export default function Index({
             ...item,
             per_page: value,
         }));
+        setIsFiltered(true);
     };
 
     const handleSearchTerm = (e: ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +103,7 @@ export default function Index({
                 search: value,
                 cursor: '',
             }));
+            setIsFiltered(true);
         }, 1000);
     };
 
@@ -106,6 +112,7 @@ export default function Index({
             ...item,
             cursor,
         }));
+        setIsFiltered(true);
     };
 
     return (
@@ -132,7 +139,7 @@ export default function Index({
                         <TableCaption>A list of your recent scanner records.</TableCaption>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[100px]">ID</TableHead>
+                                <TableHead className="w-25">ID</TableHead>
                                 <TableHead>Office Type</TableHead>
                                 <TableHead>Branch Code</TableHead>
                                 <TableHead>Branch Name</TableHead>
