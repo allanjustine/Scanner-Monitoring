@@ -108,33 +108,57 @@ export const BranchList = ({ branchLists }: { branchLists: BranchListTypes[] }) 
     };
 
     return (
-        <div className="mt-5 flex flex-col space-y-5 rounded-xl border p-10">
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="space-y-5">
+        <div className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-slate-200 p-6 dark:border-slate-700 dark:bg-[#242526] dark:from-slate-900 dark:to-slate-800">
+            {/* Form Section */}
+            <form onSubmit={handleSubmit(onSubmit)} className="mb-6 shrink-0">
+                <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-[#333333]">
+                    <h2 className="text-sm font-bold tracking-wide text-slate-900 uppercase dark:text-white">Add Branch</h2>
+
                     <div className="flex flex-col space-y-2">
-                        <Label htmlFor="branch_name" className="text-gray-200">
-                            Branch name
+                        <Label htmlFor="branch_name" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Branch Name
                         </Label>
-                        <Input {...register('branch_name')} placeholder="Enter branch name" />
+                        <Input
+                            {...register('branch_name')}
+                            placeholder="Enter branch name"
+                            className="h-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white dark:placeholder-slate-400"
+                        />
                         <InputError message={errors?.branch_name?.message} />
                     </div>
 
                     <div className="flex flex-col space-y-2">
-                        <Label htmlFor="branch_code" className="text-gray-200">
-                            Branch code
+                        <Label htmlFor="branch_code" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Branch Code
                         </Label>
-                        <Input {...register('branch_code')} placeholder="Enter branch code" />
+                        <Input
+                            {...register('branch_code')}
+                            placeholder="Enter branch code"
+                            className="h-10 border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white dark:placeholder-slate-400"
+                        />
                         <InputError message={errors?.branch_code?.message} />
                     </div>
 
-                    <div className="flex flex-col space-y-1">
-                        <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-500 text-white hover:bg-blue-600">
-                            {isSubmitting ? <Loader2 className="animate-spin" /> : isEditing.isOpen ? 'Update' : 'Submit'}
+                    <div className="flex flex-col space-y-2 pt-2">
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="h-10 w-full bg-linear-to-r from-blue-600 to-blue-700 font-medium text-white transition-all duration-200 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <span>Processing...</span>
+                                </>
+                            ) : isEditing.isOpen ? (
+                                'Update Branch'
+                            ) : (
+                                'Add Branch'
+                            )}
                         </Button>
                         <Activity mode={isEditing.isOpen ? 'visible' : 'hidden'}>
                             <Button
                                 type="button"
-                                className="w-full bg-red-500 text-white hover:bg-red-600"
+                                className="h-10 w-full bg-slate-200 font-medium text-slate-700 transition-all hover:bg-slate-300 dark:bg-[#242526] dark:text-slate-200 dark:hover:bg-slate-600"
                                 onClick={handleCancelEdit}
                                 disabled={!isEditing.isOpen}
                             >
@@ -145,36 +169,51 @@ export const BranchList = ({ branchLists }: { branchLists: BranchListTypes[] }) 
                 </div>
             </form>
 
-            <div>
-                <h1 className="text-md font-bold uppercase">Branch lists</h1>
-                <div className="h-[calc(100vh-20rem)] overflow-y-auto">
+            {/* Branch List Section */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <h3 className="mb-4 text-sm font-bold tracking-wide text-slate-900 uppercase dark:text-white">Branches ({branchLists.length})</h3>
+                <div className="flex-1 space-y-2 overflow-y-auto pr-2">
                     {branchLists.length > 0 ? (
                         branchLists.map((branchList) => (
-                            <div key={branchList.id} className="my-2 flex items-center justify-between rounded-md bg-gray-900 p-2 hover:bg-gray-800">
-                                <p className="text-gray-200">{`(${branchList.branch_code}) - ${branchList.branch_name}`}</p>
-                                <div className="flex flex-col gap-2">
+                            <div
+                                key={branchList.id}
+                                className="group flex items-center justify-between rounded-lg border border-slate-300 bg-slate-100 p-3 transition-colors duration-150 hover:border-slate-400 hover:bg-slate-200 dark:border-slate-600 dark:bg-[#3a3a3a] dark:hover:border-slate-500 dark:hover:bg-slate-600"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-200">{`(${branchList.branch_code})`}</p>
+                                    <p className="truncate text-xs text-slate-600 dark:text-slate-400">{branchList.branch_name}</p>
+                                </div>
+                                <div className="ml-2 flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                                     <Button
                                         type="button"
+                                        size="sm"
                                         variant="ghost"
-                                        className="text-x p-1 text-blue-500 hover:text-blue-600"
+                                        className="h-8 w-8 p-0 text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-slate-600 dark:hover:text-blue-300"
                                         onClick={handleEdit(branchList)}
                                     >
-                                        <Pen />
+                                        <Pen className="h-4 w-4" />
                                     </Button>
                                     <Button
                                         type="button"
+                                        size="sm"
                                         variant="ghost"
                                         disabled={isDeleting}
-                                        className="p-1 text-xs text-red-500 hover:text-red-600"
+                                        className="h-8 w-8 p-0 text-red-600 transition-colors hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:hover:bg-slate-600 dark:hover:text-red-300"
                                         onClick={handleDeleteBranchList(branchList.id)}
                                     >
-                                        {isDeleting ? <Loader2 className="animate-spin" /> : <Trash />}
+                                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <p>No branch list added yet</p>
+                        <div className="flex h-20 items-center justify-center text-center">
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                No branches yet
+                                <br />
+                                Add one to get started
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>
