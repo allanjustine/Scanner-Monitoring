@@ -39,7 +39,7 @@ class ScannerRecordListController extends Controller
                         ->orWhereRelation('branchList', 'branch_code', 'like', "%{$search}%")
                 )
             )
-            ->cursorPaginate($per_page)
+            ->simplePaginate($per_page)
             ->withQueryString();
 
         $branchLists = BranchList::all();
