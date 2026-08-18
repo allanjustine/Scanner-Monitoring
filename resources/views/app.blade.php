@@ -4,6 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Allan Justine Mascariñas">
+    <meta name="description" content="Scanner record lists">
+    <meta name="keywords" content="scanner, record, lists, monitoring, system">
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
