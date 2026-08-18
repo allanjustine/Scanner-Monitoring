@@ -52,13 +52,13 @@ export default function ScannerRecordLists({
     const statusClass = (status: 'Active' | 'Deffective' | 'For Repair') => {
         switch (status) {
             case 'For Repair':
-                return 'bg-yellow-200 text-yellow-800';
+                return 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
             case 'Active':
-                return 'bg-blue-200 text-blue-800';
+                return 'bg-blue-200 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300';
             case 'Deffective':
-                return 'bg-red-200 text-red-800';
+                return 'bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300';
             default:
-                return 'bg-indigo-200 text-indigo-800';
+                return 'bg-indigo-200 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300';
         }
     };
 
@@ -95,13 +95,13 @@ export default function ScannerRecordLists({
     const branchItems = [scannerRecordList.branch_list, ...selectableBranchLists];
 
     return (
-        <TableRow>
-            <TableCell className="font-medium">{scannerRecordList?.id}</TableCell>
+        <TableRow className="border-b border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-[#242526]">
+            <TableCell className="py-4 font-semibold text-slate-700 dark:text-slate-300">{scannerRecordList?.id}</TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 {isEditing ? (
                     <Select value={data.office_type} onValueChange={handleSubmitChange('office_type')}>
-                        <SelectTrigger className="w-50">
+                        <SelectTrigger className="h-10 w-48 border-slate-300 shadow-sm focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white">
                             <SelectValue placeholder="Select office type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -116,16 +116,16 @@ export default function ScannerRecordLists({
                         </SelectContent>
                     </Select>
                 ) : (
-                    scannerRecordList?.office_type
+                    <span className="font-medium text-slate-500">{scannerRecordList?.office_type}</span>
                 )}
             </TableCell>
 
-            <TableCell>{scannerRecordList?.branch_list?.branch_code}</TableCell>
+            <TableCell className="py-4 font-medium text-slate-400">{scannerRecordList?.branch_list?.branch_code}</TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 {isEditing ? (
                     <Select value={data.branch_list_id} onValueChange={handleSubmitChange('branch_list_id')}>
-                        <SelectTrigger className="w-50">
+                        <SelectTrigger className="h-10 w-48 border-slate-300 shadow-sm focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white">
                             <SelectValue placeholder="Select branch" />
                         </SelectTrigger>
                         <SelectContent>
@@ -146,30 +146,40 @@ export default function ScannerRecordLists({
                         </SelectContent>
                     </Select>
                 ) : (
-                    scannerRecordList?.branch_list?.branch_name
+                    <span className="text-slate-700 dark:text-slate-300">{scannerRecordList?.branch_list?.branch_name}</span>
                 )}
             </TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 {isEditing ? (
-                    <Input value={data.serial_number} placeholder="Enter scanner serial number" onChange={handleInputChange('serial_number')} />
+                    <Input
+                        value={data.serial_number}
+                        placeholder="Enter serial number"
+                        onChange={handleInputChange('serial_number')}
+                        className="h-10 border-slate-300 shadow-sm focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white dark:placeholder-slate-400"
+                    />
                 ) : (
-                    scannerRecordList?.serial_number
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{scannerRecordList?.serial_number || '-'}</span>
                 )}
             </TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 {isEditing ? (
-                    <Input value={data.model} placeholder="Enter scanner model" onChange={handleInputChange('model')} />
+                    <Input
+                        value={data.model}
+                        placeholder="Enter model"
+                        onChange={handleInputChange('model')}
+                        className="h-10 border-slate-300 shadow-sm focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white dark:placeholder-slate-400"
+                    />
                 ) : (
-                    scannerRecordList?.model
+                    <span className="text-slate-700 dark:text-slate-300">{scannerRecordList?.model || '-'}</span>
                 )}
             </TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 {isEditing ? (
                     <Select value={data.status} onValueChange={handleSubmitChange('status')}>
-                        <SelectTrigger className="w-50">
+                        <SelectTrigger className="h-10 w-40 border-slate-300 shadow-sm focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white">
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -185,54 +195,65 @@ export default function ScannerRecordLists({
                     </Select>
                 ) : (
                     scannerRecordList?.status && (
-                        <span className={`rounded-4xl px-1 py-0.5 text-[9px] font-bold uppercase ${statusClass(scannerRecordList?.status)}`}>
+                        <span
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusClass(scannerRecordList?.status)}`}
+                        >
                             {scannerRecordList?.status}
                         </span>
                     )
                 )}
             </TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 {isEditing ? (
-                    <Input value={data.remarks} placeholder="Enter remarks" onChange={handleInputChange('remarks')} />
+                    <Input
+                        value={data.remarks}
+                        placeholder="Enter remarks"
+                        onChange={handleInputChange('remarks')}
+                        className="h-10 border-slate-300 shadow-sm focus:ring-blue-500 dark:border-slate-600 dark:bg-[#242526] dark:text-white dark:placeholder-slate-400"
+                    />
                 ) : (
-                    scannerRecordList?.remarks
+                    <span className="text-sm text-slate-600 dark:text-slate-400">{scannerRecordList?.remarks || '-'}</span>
                 )}
             </TableCell>
 
-            <TableCell>
+            <TableCell className="py-4">
                 <div className="flex items-center gap-2">
                     <Activity mode={isEditing ? 'visible' : 'hidden'}>
                         <Button
                             disabled={updating}
-                            variant={'outline'}
-                            className="text-green-500 hover:text-green-600"
+                            variant="outline"
+                            className="h-9 border-green-300 bg-green-50 px-3 text-green-700 transition-all hover:border-green-400 hover:bg-green-100 dark:border-green-900 dark:bg-green-900/30 dark:text-green-400 dark:hover:border-green-700 dark:hover:bg-green-900/50"
                             type="button"
                             onClick={handleUpdate(scannerRecordList?.id ?? 0)}
                         >
-                            {updating ? <Loader2 className="animate-spin" /> : <Save />}
+                            {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         </Button>
                     </Activity>
 
                     <Activity mode={!updating ? 'visible' : 'hidden'}>
                         <Button
-                            variant={'outline'}
-                            className={`${isEditing ? 'text-red-500 hover:text-red-600' : 'text-blue-500 hover:text-blue-600'}`}
+                            variant="outline"
+                            className={`h-9 px-3 transition-all ${
+                                isEditing
+                                    ? 'border-red-300 bg-red-50 text-red-700 hover:border-red-400 hover:bg-red-100'
+                                    : 'border-blue-300 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100'
+                            }`}
                             type="button"
                             onClick={handleEdit(scannerRecordList?.id ?? 0)}
                         >
-                            {isEditing ? <X /> : <Pen />}
+                            {isEditing ? <X className="h-4 w-4" /> : <Pen className="h-4 w-4" />}
                         </Button>
                     </Activity>
 
                     <Button
                         type="button"
-                        variant={'outline'}
+                        variant="outline"
                         disabled={deleting}
                         onClick={() => destroy(route('scanner-record-lists.destroy', scannerRecordList?.id))}
-                        className="flex items-center gap-1 rounded px-2 py-1 text-sm text-red-500 hover:text-red-600"
+                        className="h-9 border-red-300 bg-red-50 px-3 text-red-700 transition-all hover:border-red-400 hover:bg-red-100"
                     >
-                        {deleting ? <Loader2 className="animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                 </div>
             </TableCell>
